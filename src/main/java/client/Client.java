@@ -12,7 +12,6 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -87,7 +86,7 @@ public class Client {
 
             if (userInput.contains("execute_script")) {
                 CommandExecuteScript cmd = (CommandExecuteScript) command;
-                ArrayList<Packet> packets = cmd.execOnClient(userInput);
+                ArrayList<Packet> packets = cmd.execute(userInput.split(" "));
                 if (packets != null) {
                     for (Packet p : packets) {
                         sendPacket(p, userInput);
@@ -95,6 +94,7 @@ public class Client {
                     }
                 }
             }
+
             else {
                 Packet packet = command.execOnClient(args);
                 sendPacket(packet, userInput);
@@ -114,7 +114,7 @@ public class Client {
 
     private void registerCommands(Invoker invoker) {
         invoker.register("show", new CommandShow());
-        invoker.register("execute_script", new CommandExecuteScript( invoker));
+        invoker.register("execute_script", new CommandExecuteScript( this, invoker));
         invoker.register("update_id", new CommandUpdateId());
         invoker.register("clear", new CommandClear());
         invoker.register("exit", new CommandExit());

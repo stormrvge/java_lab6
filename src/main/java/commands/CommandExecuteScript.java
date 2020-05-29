@@ -1,98 +1,100 @@
 package commands;
 
-import io.InputFromFile;
+import client.Client;
+import io.FileHandler;
 import logic.CollectionManager;
 import logic.Packet;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
- * Class of command Execute Script.
- * This command execute file with script.
+ * Execute script
  */
 
-public class CommandExecuteScript extends Command implements Serializable {
-    private Invoker invoker;
-    private static ArrayList<String> calls;
-    private static ArrayList<Packet> packets;
+public class CommandExecuteScript extends Command {
+    Client client;
+    Invoker invoker;
+    ArrayList<String> file_already_run;
+    ArrayList<Packet> packetArrayList;
 
-    /**
-     * Constructor
-     * @param invoker - the object of Invoker.
-     */
+    private static final int max_recursion_depth = 1000;
+    private int current_depth;
 
-    public CommandExecuteScript(Invoker invoker) {
+    public CommandExecuteScript(Client client, Invoker invoker) {
+        this.client = client;
         this.invoker = invoker;
-        calls = new ArrayList<>();
-        packets = new ArrayList<>();
+        this.file_already_run = new ArrayList<>();
+        this.current_depth = 0;
+        this.packetArrayList = new ArrayList<>();
     }
 
-    public boolean validateArgs(String ... args) {
-        return args.length == 1;
-    }
+    public ArrayList<Packet> execute(String[] cmd_args) {
+        ++current_depth;
+        final int num_args = 1;
 
-    /**
-     * This method executes script.
-     * @param collectionManager -the manager of collection
-     */
 
-    @Override
-    public String execOnServer(CollectionManager collectionManager, Object object) {
-        return collectionManager.execute_script();
-    }
+        if ((cmd_args.length - 1) != num_args) {
+            System.err.println("Execute script cannot take " + (cmd_args.length - 1) + " arguments.");
+        } else if (max_recursion_depth == current_depth) {
+            System.err.println("Maximum recursion depth reached!");
+            System.err.println("Ignore execute_script commands!");
+        } else {
+            try {
+                String cmd;
+                FileHandler file = new FileHandler(cmd_args[1], FileHandler.READ);
+                boolean is_founded = false;
 
-    public ArrayList<Packet> execOnClient(String userInput) {
 
-        String[] args = userInput.split(" ");
-        String path = args[1];
-
-        boolean exit = false;
-
-        try {
-            for (String com : calls) {
-                if (com.equals(path)) {
-                    exit = true;
-                }
-            }
-            if (exit) {
-                System.out.println("Warning! The danger of infinite recursion: " +
-                        "the same script is called more that once");
-                return null;
-            } else {
-                InputFromFile input = new InputFromFile(path);
-                String nextLine;
-                while (input.hasNextLine()) {
-                    nextLine = input.readLine();
-
-                    if (exit) {
-                        exit = false;
+                for (String file_run : file_already_run) {
+                    if (file_run.equals(cmd_args[1])) {
+                        System.err.println("Recursion detected!");
+                        System.err.println("Current recursion depth: " + ++this.current_depth);
+                        System.err.println("Max recursion depth: " + max_recursion_depth);
+                        is_founded = true;
                         break;
                     }
-                    calls.add(path);
-                    try {
-                        Command command = invoker.createCommand(nextLine);
-                        if(nextLine.contains("execute_script")) {
-                            CommandExecuteScript com = (CommandExecuteScript) command;
-                            ArrayList<Packet> answer = com.execOnClient(nextLine);
-                            packets.addAll(answer);
-                        } else {
-                            packets.add(command.execOnClient(nextLine));
-                        }
-                    } catch (NullPointerException ex) {
-                        System.out.println();
+                }
+
+                if (!is_founded) {
+                    file_already_run.add(cmd_args[1]);
+                }
+
+                while ((cmd = file.readline()) != null) {
+                    cmd = cmd.trim().replace('\t', ' ');
+                    while (cmd.contains("  ")) {
+                        cmd = cmd.replace("  ", " ");
+                    }
+                    Command command = invoker.createCommand(cmd);
+                    String[] args = invoker.getArgs();
+                    if (!invoker.getCommandName().equals("execute_script")) {
+                        Packet packet = new Packet(command, args);
+                        packetArrayList.add(packet);
+                    }
+                    else if (invoker.getCommandName().equals("execute_script")) {
+                        String[] recStr = new String[2];
+                        recStr[0] = invoker.getCommandName();
+                        String[] argsInv = invoker.getArgs();
+                        recStr[1] = args[0];
+
+                        execute(recStr);
                     }
                 }
 
-                input.closeFile();
+                --current_depth;
+                file.close();
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
             }
-        } catch (FileNotFoundException e) {
-            System.out.println("File not found! Enter the correct path to the file!");
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
         }
-        return packets;
+        if (current_depth == 0) {
+            return packetArrayList;
+        }
+        return null;
+    }
+
+    @Override
+    public String execOnServer(CollectionManager collectionManager, Object objects) {
+        return null;
     }
 }
