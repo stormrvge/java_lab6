@@ -117,71 +117,76 @@ public class Parse {
      */
     public static void parseToJSON(String path, ArrayList<Route> collection, ZonedDateTime dateTime)
             throws IOException, NoSuchFieldException {
-        Path pathToFile = Paths.get(path);
+        try {
+            Path pathToFile = Paths.get(path);
 
-        BufferedOutputStream bos;
-        FileOutputStream fos;
-        fos = new FileOutputStream(String.valueOf(pathToFile));
-        bos = new BufferedOutputStream(fos);
+            BufferedOutputStream bos;
+            FileOutputStream fos;
+            fos = new FileOutputStream(String.valueOf(pathToFile));
+            bos = new BufferedOutputStream(fos);
 
-        Route[] route = new Route[collection.size()];
-        for (int i = 0; i < route.length; i++) {
-            route[i] = collection.get(i);
-        }
-        String str;
-        String additionalStr;
-
-
-        Field arrayListField = CollectionManager.class.getDeclaredField("route");
-        String arrayListType = arrayListField.getGenericType().getTypeName();
-        arrayListType = arrayListType.replace("<", " ");
-        arrayListType = arrayListType.replace(">", " ");
-        String[] className = arrayListType.split("[ .]");
-
-        String initDate = dateTime.getYear() + "-" + dateTime.getMonthValue() + "-" + dateTime.getDayOfMonth();
-
-        str = "{" + "\n  \"initializing_date\":" + "\"" + initDate + "\"," +
-                "\n  \"" + className[4] + "\":[";       //classname[5]
-        bos.write(str.getBytes(), 0, str.length());
-        for (int i = 0; i < route.length; i++)
-        {
-            Coordinates coordinates = route[i].getCoordinates();
-            Location from = route[i].getFrom();
-            Location to = route[i].getTo();
-            ZonedDateTime creationDate = route[i].getCreationDate();
-            int[] date = {creationDate.getYear(), creationDate.getMonthValue(), creationDate.getDayOfMonth()};
-            str = "\n    {\n\t\"name\":\"" + route[i].getName() + "\", " +
-                    "\n\t\"coordinates\":{" +
-                    "\n\t  \"x\":" + coordinates.getX() + "," +
-                    "\n\t  \"y\":" + coordinates.getY() +
-                    "\n\t}," +
-                    "\n\t\"creationDate\":\"" + date[0] + "-" + date[1] + "-" + date[2] +"\"," +
-                    "\n\t\"from\":{" +
-                    "\n\t  \"x\":" + from.getX() + "," +
-                    "\n\t  \"y\":" + from.getY() +"," +
-                    "\n\t  \"z\":" + from.getZ() +
-                    "\n\t},";
-            if (to != null)
-                str += "\n\t\"to\":{" +
-                        "\n\t  \"x\":" + to.getX() + "," +
-                        "\n\t  \"y\":" + to.getY() + "," +
-                        "\n\t  \"z\":" + to.getZ() +
-                        "\n\t}," +
-                        "\n\t\"distance\":" + route[i].getDistance();
-            else {
-                str += "\n\t\"to\":null," +
-                        "\n\t\"distance\":" + route[i].getDistance();
+            Route[] route = new Route[collection.size()];
+            for (int i = 0; i < route.length; i++) {
+                route[i] = collection.get(i);
             }
-            if (i < route.length - 1) additionalStr = "\n    },";
-            else additionalStr = "\n    }";
+            String str;
+            String additionalStr;
 
+
+            Field arrayListField = CollectionManager.class.getDeclaredField("route");
+            String arrayListType = arrayListField.getGenericType().getTypeName();
+            arrayListType = arrayListType.replace("<", " ");
+            arrayListType = arrayListType.replace(">", " ");
+            String[] className = arrayListType.split("[ .]");
+
+            String initDate = dateTime.getYear() + "-" + dateTime.getMonthValue() + "-" + dateTime.getDayOfMonth();
+
+            str = "{" + "\n  \"initializing_date\":" + "\"" + initDate + "\"," +
+                    "\n  \"" + className[4] + "\":[";       //classname[5]
             bos.write(str.getBytes(), 0, str.length());
-            bos.write(additionalStr.getBytes(), 0, additionalStr.length());
+            for (int i = 0; i < route.length; i++)
+            {
+                Coordinates coordinates = route[i].getCoordinates();
+                Location from = route[i].getFrom();
+                Location to = route[i].getTo();
+                ZonedDateTime creationDate = route[i].getCreationDate();
+                int[] date = {creationDate.getYear(), creationDate.getMonthValue(), creationDate.getDayOfMonth()};
+                str = "\n    {\n\t\"name\":\"" + route[i].getName() + "\", " +
+                        "\n\t\"coordinates\":{" +
+                        "\n\t  \"x\":" + coordinates.getX() + "," +
+                        "\n\t  \"y\":" + coordinates.getY() +
+                        "\n\t}," +
+                        "\n\t\"creationDate\":\"" + date[0] + "-" + date[1] + "-" + date[2] +"\"," +
+                        "\n\t\"from\":{" +
+                        "\n\t  \"x\":" + from.getX() + "," +
+                        "\n\t  \"y\":" + from.getY() +"," +
+                        "\n\t  \"z\":" + from.getZ() +
+                        "\n\t},";
+                if (to != null)
+                    str += "\n\t\"to\":{" +
+                            "\n\t  \"x\":" + to.getX() + "," +
+                            "\n\t  \"y\":" + to.getY() + "," +
+                            "\n\t  \"z\":" + to.getZ() +
+                            "\n\t}," +
+                            "\n\t\"distance\":" + route[i].getDistance();
+                else {
+                    str += "\n\t\"to\":null," +
+                            "\n\t\"distance\":" + route[i].getDistance();
+                }
+                if (i < route.length - 1) additionalStr = "\n    },";
+                else additionalStr = "\n    }";
+
+                bos.write(str.getBytes(), 0, str.length());
+                bos.write(additionalStr.getBytes(), 0, additionalStr.length());
+            }
+            str = "\n  ]\n}";
+            bos.write(str.getBytes(), 0, str.length());
+            bos.flush();
+            bos.close();
+        } catch (NullPointerException e) {
+            System.err.println("No file");      //FIX
         }
-        str = "\n  ]\n}";
-        bos.write(str.getBytes(), 0, str.length());
-        bos.flush();
-        bos.close();
+
     }
 
     /**

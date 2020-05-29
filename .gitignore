@@ -1,0 +1,10 @@
+# Default ignored files
+/workspace.xml
+/.idea
+/out
+/src/test
+/target
+/lab6_log.iml
+/logClient.log
+/logServer.log
+/pom.xml

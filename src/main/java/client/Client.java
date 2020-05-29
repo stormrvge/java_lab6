@@ -12,6 +12,8 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -21,13 +23,15 @@ public class Client {
     private Input input;
     private static Invoker invoker;
     private int port;
+    private String hostname;
     private static boolean close = false;
     private int tryingConnect = 0;
 
     private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
 
-    public Client(int port) {
+    public Client(String hostname, int port) {
+        this.hostname = hostname;
         this.port = port;
     }
 
@@ -38,7 +42,7 @@ public class Client {
 
         try {
             try {
-                SocketAddress addr = new InetSocketAddress("127.0.0.1", port);
+                SocketAddress addr = new InetSocketAddress(hostname, port);
                 channel = SocketChannel.open(addr);
                 channel.configureBlocking(false);
                 System.out.println("Connected to server!");
@@ -137,7 +141,7 @@ public class Client {
             byte[] message = serializeObject(packet);
 
             ByteBuffer wrap = ByteBuffer.allocate(1024);
-            wrap.clear();
+            wrap = (ByteBuffer) ((Buffer)wrap).clear();
             wrap = ByteBuffer.wrap(message);
 
             channel.write(wrap);

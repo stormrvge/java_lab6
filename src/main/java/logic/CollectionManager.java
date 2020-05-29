@@ -142,10 +142,12 @@ public class CollectionManager implements Serializable {
     public void save(String path) {
         try {
             Parse.parseToJSON(path, route, date);
-        } catch (IOException | NoSuchFieldException e) {
-            System.err.println("Permission denied or file not found.");
+        } catch (IOException e) {
+            System.err.println(Server.parseIOException(e));
         } catch (InvalidPathException e) {
             System.err.println("Invalid path!");
+        } catch (NoSuchFieldException e) {
+            System.err.println(e.getMessage());
         }
     }
 

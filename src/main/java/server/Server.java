@@ -1,16 +1,12 @@
 package server;
 
 import commands.Command;
-import io.Input;
 import logic.CollectionManager;
 import logic.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -33,8 +29,6 @@ public class Server {
     }
 
     public void run() throws IOException {
-        Input input = new Input();
-
         try {
             server = new ServerSocket(port);
             System.out.println("Server started on: " + server.getInetAddress());
@@ -43,11 +37,14 @@ public class Server {
             manager = new CollectionManager();
             logger.info("Collection was initialized correctly.");
 
-            input.readCommand();
-            while (!input.getNextCommand().equals("exit")) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+            while (!(reader.ready() && reader.readLine().trim().equals("exit"))) {
                 acceptConnection();
             }
-            logger.info("EXIT");
+
+            logger.info("Word \"exit\" has been entered.");
+            logger.info("Stop receiving data.");
         } catch (IOException  e) {
             System.err.println(e.getMessage());
         } finally {
