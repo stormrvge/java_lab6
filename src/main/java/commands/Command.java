@@ -15,4 +15,8 @@ public abstract class Command implements Serializable {
         packet.wrap(this);
         return packet;
     }
+
+    public void serverCmd(CollectionManager collectionManager, Object args) {
+
+    }
 }

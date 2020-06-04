@@ -5,7 +5,7 @@ import java.util.Scanner;
 /**
  * This class scans commands from command line.
  */
-public class Input {
+public class Input extends Thread {
     private String nextCommand;
     private Scanner userInput;
 

@@ -13,6 +13,11 @@ public class Packet implements Serializable {
         this.argument = null;
     }
 
+    public Packet(Object argument) {
+        this.command = null;
+        this.argument = argument;
+    }
+
     public Packet(Command command, Object argument) {
         this.command = command;
         this.argument = argument;
@@ -21,6 +26,10 @@ public class Packet implements Serializable {
 
     public void wrap(Command command) {
         this.command = command;
+    }
+
+    public void wrap(Object argument) {
+        this.argument = argument;
     }
 
     public void wrap(Command command, Object argument) {
